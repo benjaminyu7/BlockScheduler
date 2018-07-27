@@ -8,7 +8,8 @@
 
 import React, {Component} from 'react';
 import {Platform,ScrollView, StyleSheet, Text, View, Button, TextInput} from 'react-native';
-import {BlockContainer,TodoBlock} from './todoBlock';
+import {TodoBlock} from './todoBlock';
+import {BlockContainer} from './blockContainer.js';
 import BlockInput from './blockInput';
 
 type Props = {};
