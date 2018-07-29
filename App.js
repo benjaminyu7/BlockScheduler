@@ -21,9 +21,9 @@ export default class App extends Component<Props> {
   }
   render() {
     return (
-      <ScrollView contentContainerStyle={styles.container} style={{flex:1}}>
+      <View style={styles.container} >
 	    <BlockContainer/>
-      </ScrollView>
+      </View>
     );
   }
 }
@@ -32,5 +32,6 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     backgroundColor: '#F5FCFF',
+    flex: 1,
   },
 });
