@@ -1,11 +1,3 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- * @flow
- */
-
 import React, {Component} from 'react';
 import {Platform,ScrollView, StyleSheet, Text, View, Button, TextInput} from 'react-native';
 import {TodoBlock} from './todoBlock';

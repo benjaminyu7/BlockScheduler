@@ -2,13 +2,14 @@ import React, {Component} from 'react';
 import {ScrollView,Text,View,StyleSheet,AsyncStorage} from 'react-native';
 import BlockInput from './blockInput';
 import TodoBlock from './todoBlock';
+import {TipBar} from './tipBar';
 
 class BlockContainer extends Component<Props> {
 	constructor() {
 		super();
 		this.state={
 			blockArray: null,
-			selected: 1,
+			selected: -1,
 		};
 		this.handleInput = this.handleInput.bind(this);
 		this.selectBlock = this.selectBlock.bind(this);
@@ -20,14 +21,14 @@ class BlockContainer extends Component<Props> {
 		AsyncStorage.getItem('urgentImportant').then((value)=>this.setState({blockArray: JSON.parse(value)})); 
 	}
 
-	//Sets the state of input, creates a block
-	handleInput (newTitle,newDescription) {
+	//creates the block data object w/ title, description, category
+	handleInput (newTitle,newDescription,newCategory) {
 		//input function for BlockInput as props
 		var urgentImportant ; 
 		if (this.state.blockArray === null) {
-			this.setState({blockArray: [{title:newTitle, description:newDescription}]});
+			this.setState({blockArray: [{title:newTitle, description:newDescription, category: newCategory}]});
 		} else {
-			this.state.blockArray.push({title: newTitle , description: newDescription})
+			this.state.blockArray.push({title: newTitle , description: newDescription, category: newCategory})
 			this.setState((prevState)=>(  {blockArray: prevState.blockArray }));
 		}
 		AsyncStorage.setItem('urgentImportant',JSON.stringify(this.state.blockArray));
@@ -51,18 +52,19 @@ class BlockContainer extends Component<Props> {
 		//Takes the blockArray State and creates all of the blocks
 		var blocks = [];
 		var x;
+		//Create the list of blocks from the state of block data, 4 categories
 		if (this.state.blockArray !== null) {
-			for (x=0; x<this.state.blockArray.length; x++) {
-				blocks.push(<TodoBlock key={x} title={this.state.blockArray[x].title} description={this.state.blockArray[x].description} func={this.selectBlock} index={x} selected={this.state.selected}/>);
+			for (x=this.state.blockArray.length-1; x>=0; x--) {
+				blocks.push(<TodoBlock key={x} title={this.state.blockArray[x].title} description={this.state.blockArray[x].description} func={this.selectBlock} index={x} selected={this.state.selected} category={this.state.blockArray[x].category}/>);
 			}
 		}
 		return(
-			<View style={{alignItems: 'center'}}>
+			<View>
+				<TipBar />
 				<ScrollView contentContainerStyle={todoStyle.container} style={{flex:1}}>
 					{blocks}
 				</ScrollView>
 				<BlockInput func={this.handleInput} deleteBlock={this.deleteBlock} style={{flex:1}}/>
-				<Text>{this.state.selected}</Text>
 			</View>
 		);
 	}
