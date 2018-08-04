@@ -10,32 +10,70 @@ class BlockContainer extends Component<Props> {
 		this.state={
 			blockArray: null,
 			selected: -1,
+			directory: null, //the block directory located in
 		};
+		this.loadRoot = this.loadRoot.bind(this);
 		this.handleInput = this.handleInput.bind(this);
 		this.selectBlock = this.selectBlock.bind(this);
 		this.deleteBlock = this.deleteBlock.bind(this);
+		this.changeDirectory = this.changeDirectory.bind(this);
 	}
 
 	//get all the blocks from storage and set the block state 'blockArray'
 	componentDidMount() {
-		AsyncStorage.getItem('urgentImportant').then((value)=>this.setState({blockArray: JSON.parse(value)})); 
+		this.loadRoot();
 	}
 
-	//creates the block data object w/ title, description, category
+	loadRoot () {
+		AsyncStorage.getItem('urgentImportant').then((value)=>this.setState({blockArray: JSON.parse(value), selected: -1, directory:null})); 
+	}
+	/*creates the block data object w/ title, description, category, and parent
+	*/
 	handleInput (newTitle,newDescription,newCategory) {
 		//input function for BlockInput as props
 		var urgentImportant ; 
+		var newObject = {title:newTitle, description:newDescription, category: newCategory, parentBlock: null, childrenBlock: null};
 		if (this.state.blockArray === null) {
-			this.setState({blockArray: [{title:newTitle, description:newDescription, category: newCategory}]});
+			this.setState({blockArray: [newObject]});
 		} else {
-			this.state.blockArray.push({title: newTitle , description: newDescription, category: newCategory})
+			this.state.blockArray.push(newObject)
 			this.setState((prevState)=>(  {blockArray: prevState.blockArray }));
 		}
 		AsyncStorage.setItem('urgentImportant',JSON.stringify(this.state.blockArray));
 	}
+	
+	//changes the toodblock directory for the blocks which are displayed
+	changeDirectory(index){
+		if(this.state.directory===this.state.blockArray[index]) {
+			if(this.state.directory.parentBlock===null) {
+				this.loadRoot();
+			} else {
+				//load the parent directory
+				this.setState((prevState)=>{return {
+					blockArray: [prevState.directory.parentBlock],
+					directory: prevState.directory.parentBlock,
+					selected: -1,
+				}});
+			}
+		} else {
+			//sets the array block with the parent and children
+			this.setState((prevState)=>{return {
+				blockArray: [prevState.blockArray[prevState.selected]],
+				directory: prevState.blockArray[prevState.selected],
+				selected: -1,
+			}});
+		}
+	}
 
-	//Sets the selected block state, for editing and deleting
+	/*Sets the selected block state, for editing and deleting
+	 Double tap: goes into the block's directory if it has children
+	 If it's the parent block, go to the parent's parent
+	 */
 	selectBlock (index) {
+		if (index===this.state.selected) {
+			this.changeDirectory(index);
+			this.setState({selected: -1});
+		}
 		this.setState({selected: index});
 	}
 
@@ -59,12 +97,12 @@ class BlockContainer extends Component<Props> {
 			}
 		}
 		return(
-			<View>
+			<View style={{alignItems:'center', flexDirection: 'column',flex:1}}>
 				<TipBar />
-				<ScrollView contentContainerStyle={todoStyle.container} style={{flex:1}}>
+				<ScrollView contentContainerStyle={todoStyle.container}> 
 					{blocks}
 				</ScrollView>
-				<BlockInput func={this.handleInput} deleteBlock={this.deleteBlock} style={{flex:1}}/>
+				<BlockInput func={this.handleInput} deleteBlock={this.deleteBlock} />
 			</View>
 		);
 	}
@@ -73,6 +111,7 @@ class BlockContainer extends Component<Props> {
 
 const todoStyle = StyleSheet.create({
 	container: {
+		width:360,
 		flexDirection: 'row',
 		flexWrap: 'wrap',
 	},

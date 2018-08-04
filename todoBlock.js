@@ -4,13 +4,16 @@ import BlockInput from './blockInput';
 
 //This component contain the text and title for a todo item, with passed block selection func, index of the block, currently selected block, category of the block
 export default class TodoBlock extends React.Component<props> {
-	constructor(title, description,func, index, selected, category) {
+	
+	constructor(title, description,func, index, selected, category, parentBlock,childrenBlock) {
 		super();
 		this.title=title;
 		this.description=description;
 		this.index=index;
 		this.selected=selected;
 		this.category=category;
+		this.parentBlock=parentBlock;
+		this.childrenBlock=childrenBlock;
 	}
 
 	getSelected
