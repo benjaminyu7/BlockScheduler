@@ -9,6 +9,7 @@ class BlockContainer extends Component<Props> {
 		super();
 		this.state={
 			blockArray: null,
+			currentArray: null,
 			selected: -1,
 			directory: null, //the block directory located in
 		};
@@ -25,41 +26,59 @@ class BlockContainer extends Component<Props> {
 	}
 
 	loadRoot () {
-		AsyncStorage.getItem('urgentImportant').then((value)=>this.setState({blockArray: JSON.parse(value), selected: -1, directory:null})); 
+		AsyncStorage.getItem('urgentImportant').then((value)=>this.setState({blockArray: JSON.parse(value), currentArray: JSON.parse(value), selected: -1, directory:null})); 
 	}
 	/*creates the block data object w/ title, description, category, and parent
 	*/
+
+	treeToStorage () {
+		//transforms the current tree to storage
+	}
+
+	storageToTree () {
+		//loads the tree from storage
+	}
+
 	handleInput (newTitle,newDescription,newCategory) {
 		//input function for BlockInput as props
 		var urgentImportant ; 
-		var newObject = {title:newTitle, description:newDescription, category: newCategory, parentBlock: null, childrenBlock: null};
-		if (this.state.blockArray === null) {
+		var newObject = {title:newTitle, description:newDescription, category: newCategory, parentBlock: this.state.directory, childrenBlock: []};
+		if (this.state.currentArray === null) {
 			this.setState({blockArray: [newObject]});
 		} else {
-			this.state.blockArray.push(newObject)
-			this.setState((prevState)=>(  {blockArray: prevState.blockArray }));
+			this.state.currentArray.push(newObject)
+			this.setState((prevState)=>(  {currentArray: prevState.currentArray }));
+		}
+		//handles the input when there's a parent directory
+		if (this.state.directory!== null) {
+			this.state.directory.childrenBlock.push(newObject);
+		} else {
+			this.state.blockArray.push(newObject);
 		}
 		AsyncStorage.setItem('urgentImportant',JSON.stringify(this.state.blockArray));
 	}
 	
 	//changes the toodblock directory for the blocks which are displayed
 	changeDirectory(index){
-		if(this.state.directory===this.state.blockArray[index]) {
+		//Go to the parent's directory
+		if(this.state.directory!==null&&index===-2) {
 			if(this.state.directory.parentBlock===null) {
 				this.loadRoot();
 			} else {
 				//load the parent directory
 				this.setState((prevState)=>{return {
-					blockArray: [prevState.directory.parentBlock],
+					currentArray: prevState.directory.parentBlock.childrenBlock,
 					directory: prevState.directory.parentBlock,
 					selected: -1,
 				}});
 			}
-		} else {
+		} 
+		//Go to the child's directory
+		else {
 			//sets the array block with the parent and children
 			this.setState((prevState)=>{return {
-				blockArray: [prevState.blockArray[prevState.selected]],
-				directory: prevState.blockArray[prevState.selected],
+				currentArray: prevState.currentArray[prevState.selected].childrenBlock,
+				directory: prevState.currentArray[prevState.selected],
 				selected: -1,
 			}});
 		}
@@ -80,8 +99,8 @@ class BlockContainer extends Component<Props> {
 	//Handles the deletion of a block
 	deleteBlock () {
 		if (this.state.selected !== -1) {
-			this.state.blockArray.splice(this.state.selected,1);
-			this.setState((prevState)=>({blockArray:prevState.blockArray, selected: -1}));
+			this.state.currentArray.splice(this.state.selected,1);
+			this.setState((prevState)=>({currentArray:prevState.currentArray, selected: -1}));
 			AsyncStorage.setItem('urgentImportant',JSON.stringify(this.state.blockArray));
 		}	
 	}
@@ -89,11 +108,14 @@ class BlockContainer extends Component<Props> {
 	render() {
 		//Takes the blockArray State and creates all of the blocks
 		var blocks = [];
-		var x;
+		var x = 0;
 		//Create the list of blocks from the state of block data, 4 categories
-		if (this.state.blockArray !== null) {
-			for (x=this.state.blockArray.length-1; x>=0; x--) {
-				blocks.push(<TodoBlock key={x} title={this.state.blockArray[x].title} description={this.state.blockArray[x].description} func={this.selectBlock} index={x} selected={this.state.selected} category={this.state.blockArray[x].category}/>);
+		if(this.state.directory!==null) {
+			blocks.push(<TodoBlock key={-2} title={this.state.directory.title} description={this.state.directory.description} func={this.selectBlock} index={-2} selected={this.state.selected} category={this.state.directory.category}/>);
+		}
+		if (this.state.currentArray !== null) {
+			for (x=this.state.currentArray.length-1; x>=0; x--) {
+				blocks.push(<TodoBlock key={x} title={this.state.currentArray[x].title} description={this.state.currentArray[x].description} func={this.selectBlock} index={x} selected={this.state.selected} category={this.state.currentArray[x].category}/>);
 			}
 		}
 		return(
@@ -103,6 +125,7 @@ class BlockContainer extends Component<Props> {
 					{blocks}
 				</ScrollView>
 				<BlockInput func={this.handleInput} deleteBlock={this.deleteBlock} />
+				<Text> {this.state.selected}</Text>
 			</View>
 		);
 	}
